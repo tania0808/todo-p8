@@ -21,20 +21,19 @@
     <![endif]-->
 </head>
 
-<body>
+<body class="p-0">
 <nav class="navbar navbar-light navbar-fixed-top" style="background-color: #e3f2fd;" role="navigation">
     <div class="container">
         <div class="navbar-header">
-            <a class="navbar-brand" href="/">To Do List app</a>
-
             <img src="{{ asset('img/Logo_OpenClassrooms.png') }}" alt="OpenClassrooms" />
+            <a class="navbar-brand" href="/">To Do List app</a>
         </div>
     </div>
 </nav>
 
 <!-- Page Content -->
 <div class="container">
-    <div class="row">
+    <div class="py-4">
         <a href="{{ path('user_create') }}" class="btn btn-primary">Créer un utilisateur</a>
 
         {% if app.user %}
@@ -76,16 +75,14 @@
 <!-- /.container -->
 
 <div class="container">
-
-    <hr>
     <footer>
         <div class="row">
             <div class="col-lg-12">
+                <hr>
                 <p class="pull-right">Copyright &copy; OpenClassrooms</p>
             </div>
         </div>
     </footer>
-
 </div>
 
 <script src="{{ asset('js/jquery.js') }}"></script>
