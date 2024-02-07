@@ -26,14 +26,16 @@ class UserController extends AbstractController
     public function create(Request $request, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher): RedirectResponse|Response
     {
         $user = new User();
-        $form = $this->createForm(UserType::class, $user);
-
+        $form = $this->createForm(UserType::class);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $password = $passwordHasher->hashPassword($user, $user->getPassword());
+            //dd($form->getData());
+            $password = $passwordHasher->hashPassword($user, $form->get('password')->getData());
             $user->setPassword($password);
-
+            $user->setUsername($form->get('username')->getData());
+            $user->setEmail($form->get('email')->getData());
+            $user->setRoles($form->get('roles')->getData());
             $em->persist($user);
             $em->flush();
 

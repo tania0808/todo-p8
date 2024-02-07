@@ -29,6 +29,9 @@ class Task
     #[ORM\Column]
     private ?\DateTimeImmutable $updated_at = null;
 
+    #[ORM\ManyToOne(inversedBy: 'tasks')]
+    private ?User $author = null;
+
     public function __construct()
     {
         $this->isDone = false;
@@ -103,6 +106,18 @@ class Task
     public function toggle($isDone): static
     {
         $this->isDone = $isDone;
+        return $this;
+    }
+
+    public function getAuthor(): ?User
+    {
+        return $this->author;
+    }
+
+    public function setAuthor(?User $author): static
+    {
+        $this->author = $author;
+
         return $this;
     }
 }
