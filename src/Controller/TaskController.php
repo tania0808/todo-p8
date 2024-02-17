@@ -10,14 +10,15 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\Routing\Attribute\Route;
 
 class TaskController extends AbstractController
 {
     #[Route('/tasks', name: 'task_list')]
-    public function index(TaskRepository $taskRepository)
+    public function index(#[MapQueryParameter] bool $isDone,TaskRepository $taskRepository)
     {
-        return $this->render('task/list.html.twig', ['tasks' => $taskRepository->findAll()]);
+        return $this->render('task/list.html.twig', ['tasks' => $taskRepository->findByIsDoneField($isDone)]);
     }
 
     #[Route('/tasks/create', name: 'task_create')]
@@ -73,7 +74,7 @@ class TaskController extends AbstractController
         $message = $task->isDone() ? 'faite' : 'non terminée';
         $this->addFlash('success', sprintf('La tâche %s a bien été marquée comme ' . $message, $task->getTitle()));
 
-        return $this->redirectToRoute('task_list');
+        return $this->redirectToRoute('task_list', ['isDone' => $task->isDone()]);
     }
 
     #[Route('/tasks/{id}/delete', name: 'task_delete')]

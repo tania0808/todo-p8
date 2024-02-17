@@ -7,7 +7,7 @@
 {% block body %}
     <div class="d-grid gap-3 d-md-block">
         <a href="{{ path('task_create') }}" class="btn btn-success mt-1">Créer une nouvelle tâche</a>
-        <a href="{{ path('task_list') }}" class="btn btn-info mt-1">Consulter la liste des tâches à faire</a>
-        <a href="" class="btn btn-secondary mt-1">Consulter la liste des tâches terminées</a>
+        <a href="{{ path('task_list', { isDone: false }) }}" class="btn btn-info mt-1">Consulter la liste des tâches à faire</a>
+        <a href="{{ path('task_list', { isDone: true }) }}" class="btn btn-secondary mt-1">Consulter la liste des tâches terminées</a>
     </div>
 {% endblock %}

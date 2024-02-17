@@ -25,12 +25,12 @@ class UserController extends AbstractController
     #[Route('/users/create', name: 'user_create')]
     public function create(Request $request, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher): RedirectResponse|Response
     {
-        $user = new User();
-        $form = $this->createForm(UserType::class);
+        $user = $request->attributes->get('user') ?? new User();
+        $form = $this->createForm(UserType::class, $user);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $password = $passwordHasher->hashPassword($user, $form->get('password')->getData());
+            $password = $passwordHasher->hashPassword($user, $form->get('plain_password')->getData());
             $user->setPassword($password);
             $user->setUsername($form->get('username')->getData());
             $user->setEmail($form->get('email')->getData());
@@ -46,16 +46,23 @@ class UserController extends AbstractController
         return $this->render('user/create.html.twig', ['form' => $form->createView()]);
     }
 
-    #[Route('/users/{id}/edit', name: 'user_edit')]
+    #[Route('/users/{user}/edit', name: 'user_edit')]
     public function edit(User $user, Request $request, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher): RedirectResponse|Response
     {
-        $form = $this->createForm(UserType::class, $user);
+        //dd($user);
+        $form = $this->createForm(UserType::class, $user, ['editForm' => true]);
 
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $password = $passwordHasher->hashPassword($user, $user->getPassword());
-            $user->setPassword($password);
+            $plainPassword = $form->get('plain_password')->getData();
+
+            if (!empty($plainPassword)) {
+                $password = $passwordHasher->hashPassword($user, $plainPassword);
+                $user->setPassword($password);
+            }
+
+            $em->persist($user);
             $em->flush();
 
             $this->addFlash('success', "L'utilisateur a bien été modifié");

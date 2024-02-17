@@ -17,6 +17,7 @@ class ErrorController extends AbstractController
 
     public function showException(\Throwable $exception): Response
     {
+        dd($exception);
         $statusCode = $exception->getStatusCode() ?? 500;
 
         $message = '';
