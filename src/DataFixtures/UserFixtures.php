@@ -24,6 +24,7 @@ class UserFixtures extends Fixture
             $user->setPassword(
                 $this->passwordHasher->hashPassword($user, 'admin123')
             );
+            $user->setRoles(rand(0, 1) ? ['ROLE_USER'] : ['ROLE_ADMIN']);
 
             $this->addReference(self::USER_REFERENCE.$i, $user);
             $manager->persist($user);
