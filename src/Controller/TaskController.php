@@ -7,6 +7,7 @@ use App\Form\TaskType;
 use App\Repository\TaskRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Finder\Exception\AccessDeniedException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,8 +16,12 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class TaskController extends AbstractController
 {
+    private const TASK_DELETE = 'task_delete';
+    private const TASK_EDIT = 'task_edit';
+    private const TASK_TOGGLE = 'task_toggle';
+
     #[Route('/tasks', name: 'task_list')]
-    public function index(#[MapQueryParameter] bool $isDone,TaskRepository $taskRepository)
+    public function index(#[MapQueryParameter] bool $isDone, TaskRepository $taskRepository)
     {
         return $this->render('task/list.html.twig', ['tasks' => $taskRepository->findByIsDoneField($isDone)]);
     }
@@ -38,7 +43,7 @@ class TaskController extends AbstractController
 
             $this->addFlash('success', 'La tâche a été bien été ajoutée.');
 
-            return $this->redirectToRoute('task_list');
+            return $this->redirectToRoute('task_list', ['isDone' => $task->isDone()]);
         }
 
         return $this->render('task/create.html.twig', ['form' => $form->createView()]);
@@ -47,6 +52,8 @@ class TaskController extends AbstractController
     #[Route('/tasks/{id}/edit', name: 'task_edit')]
     public function edit(Task $task, Request $request, EntityManagerInterface $em)
     {
+        $this->guardAgainstAccess($task, self::TASK_EDIT);
+
         $form = $this->createForm(TaskType::class, $task);
 
         $form->handleRequest($request);
@@ -56,7 +63,7 @@ class TaskController extends AbstractController
 
             $this->addFlash('success', 'La tâche a bien été modifiée.');
 
-            return $this->redirectToRoute('task_list');
+            return $this->redirectToRoute('task_list', ['isDone' => $task->isDone()]);
         }
 
         return $this->render('task/edit.html.twig', [
@@ -68,6 +75,8 @@ class TaskController extends AbstractController
     #[Route('/tasks/{id}/toggle', name: 'task_toggle')]
     public function toggleTask(Task $task, EntityManagerInterface $em)
     {
+        $this->guardAgainstAccess($task, self::TASK_TOGGLE);
+
         $task->toggle(!$task->isDone());
         $em->flush();
 
@@ -80,11 +89,36 @@ class TaskController extends AbstractController
     #[Route('/tasks/{id}/delete', name: 'task_delete')]
     public function deleteTask(Task $task, EntityManagerInterface $em)
     {
+        $this->guardAgainstAccess($task, self::TASK_DELETE);
+
         $em->remove($task);
         $em->flush();
 
         $this->addFlash('success', 'La tâche a bien été supprimée.');
 
-        return $this->redirectToRoute('task_list');
+        return $this->redirectToRoute('task_list', ['isDone' => $task->isDone()]);
+    }
+
+    private function guardAgainstAccess(Task $task, string $action): void
+    {
+        $message = 'Vous ne pouvez pas accéder à cette tâche.';
+        switch ($action) {
+            case self::TASK_DELETE:
+                $message = 'Vous ne pouvez pas supprimer une tâche qui ne vous appartient pas !';
+                break;
+            case self::TASK_EDIT:
+                $message = 'Vous ne pouvez pas modifier une tâche qui ne vous appartient pas !';
+                break;
+            case self::TASK_TOGGLE:
+                $message = 'Vous ne pouvez pas changer le status de la tâche qui ne vous appartient pas !';
+                break;
+        }
+
+        if($task->getAuthor() === $this->getUser()) {
+            return;
+        }
+
+        $this->addFlash('error', $message);
+        $this->redirectToRoute('task_list', ['isDone' => $task->isDone()]);
     }
 }

@@ -15,9 +15,8 @@ class ErrorController extends AbstractController
         $this->twig = $twig;
     }
 
-    public function showException(\Throwable $exception): Response
+    public function showException(\Exception $exception): Response
     {
-        dd($exception);
         $statusCode = $exception->getStatusCode() ?? 500;
 
         $message = '';
