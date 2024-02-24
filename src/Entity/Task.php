@@ -29,8 +29,8 @@ class Task
     #[ORM\Column]
     private ?\DateTimeImmutable $updated_at = null;
 
-    #[ORM\ManyToOne(inversedBy: 'tasks')]
-    private ?User $author = null;
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'tasks')]
+    private User $author;
 
     public function __construct()
     {
@@ -95,5 +95,25 @@ class Task
         $this->author = $author;
 
         return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->created_at;
+    }
+
+    public function setCreatedAt(?\DateTimeImmutable $created_at): void
+    {
+        $this->created_at = $created_at;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeImmutable
+    {
+        return $this->updated_at;
+    }
+
+    public function setUpdatedAt(?\DateTimeImmutable $updated_at): void
+    {
+        $this->updated_at = $updated_at;
     }
 }

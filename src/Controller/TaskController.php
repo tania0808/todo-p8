@@ -29,6 +29,10 @@ class TaskController extends AbstractController
     #[Route('/tasks/create', name: 'task_create')]
     public function create(Request $request, EntityManagerInterface $em): RedirectResponse|Response
     {
+        if(!$this->getUser()) {
+            return $this->redirectToRoute('login');
+        }
+
         $task = new Task();
         $form = $this->createForm(TaskType::class, $task);
 
@@ -41,7 +45,7 @@ class TaskController extends AbstractController
             $em->persist($task);
             $em->flush();
 
-            $this->addFlash('success', 'La tâche a été bien été ajoutée.');
+            $this->addFlash('success', 'La tâche a bien été ajoutée.');
 
             return $this->redirectToRoute('task_list', ['isDone' => $task->isDone()]);
         }
@@ -52,7 +56,9 @@ class TaskController extends AbstractController
     #[Route('/tasks/{id}/edit', name: 'task_edit')]
     public function edit(Task $task, Request $request, EntityManagerInterface $em)
     {
-        $this->guardAgainstAccess($task, self::TASK_EDIT);
+        if ($task->getAuthor() !== $this->getUser()) {
+            $this->guardAgainstUnauthorizedAccess();
+        }
 
         $form = $this->createForm(TaskType::class, $task);
 
@@ -75,7 +81,9 @@ class TaskController extends AbstractController
     #[Route('/tasks/{id}/toggle', name: 'task_toggle')]
     public function toggleTask(Task $task, EntityManagerInterface $em)
     {
-        $this->guardAgainstAccess($task, self::TASK_TOGGLE);
+        if ($task->getAuthor() !== $this->getUser()) {
+            $this->guardAgainstUnauthorizedAccess();
+        }
 
         $task->toggle(!$task->isDone());
         $em->flush();
@@ -89,36 +97,20 @@ class TaskController extends AbstractController
     #[Route('/tasks/{id}/delete', name: 'task_delete')]
     public function deleteTask(Task $task, EntityManagerInterface $em)
     {
-        $this->guardAgainstAccess($task, self::TASK_DELETE);
+        if ($task->getAuthor() !== $this->getUser()) {
+            $this->guardAgainstUnauthorizedAccess();
+        }
 
         $em->remove($task);
         $em->flush();
 
         $this->addFlash('success', 'La tâche a bien été supprimée.');
 
-        return $this->redirectToRoute('task_list', ['isDone' => $task->isDone()]);
+        return $this->redirectToRoute('task_list', ['isDone' => false]);
     }
 
-    private function guardAgainstAccess(Task $task, string $action): void
+    private function guardAgainstUnauthorizedAccess(): void
     {
-        $message = 'Vous ne pouvez pas accéder à cette tâche.';
-        switch ($action) {
-            case self::TASK_DELETE:
-                $message = 'Vous ne pouvez pas supprimer une tâche qui ne vous appartient pas !';
-                break;
-            case self::TASK_EDIT:
-                $message = 'Vous ne pouvez pas modifier une tâche qui ne vous appartient pas !';
-                break;
-            case self::TASK_TOGGLE:
-                $message = 'Vous ne pouvez pas changer le status de la tâche qui ne vous appartient pas !';
-                break;
-        }
-
-        if($task->getAuthor() === $this->getUser()) {
-            return;
-        }
-
-        $this->addFlash('error', $message);
-        $this->redirectToRoute('task_list', ['isDone' => $task->isDone()]);
+        throw new AccessDeniedException('',403);
     }
 }

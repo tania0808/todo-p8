@@ -17,10 +17,14 @@ class ErrorController extends AbstractController
 
     public function showException(\Exception $exception): Response
     {
-        $statusCode = $exception->getStatusCode() ?? 500;
-
-        $message = '';
-        $details = '';
+        if(method_exists($exception, 'getStatusCode')) {
+            $statusCode = $exception->getStatusCode();
+        }
+        elseif (method_exists($exception, 'getCode')) {
+            $statusCode = $exception->getCode();
+        } else {
+            $statusCode = 500;
+        }
 
         switch ($statusCode) {
             case 403:

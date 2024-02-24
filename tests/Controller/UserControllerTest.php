@@ -4,28 +4,14 @@ namespace App\Tests\Controller;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use App\Tests\DatabaseWebTest;
 
-class UserControllerTest extends WebTestCase
+class UserControllerTest extends DatabaseWebTest
 {
-    private $client;
-
-    public function setUp(): void
-    {
-        $this->client = static::createClient();
-    }
-
-    public function loginUser(): void
+    public function getUser(): User
     {
         $userRepository = $this->client->getContainer()->get(UserRepository::class);
-        $testUser = $userRepository->findOneByRole('ROLE_USER');
-        $this->client->loginUser($testUser);
-    }
-    public function loginAdminUser(): void
-    {
-        $userRepository = $this->client->getContainer()->get(UserRepository::class);
-        $testUser = $userRepository->findOneByRole('ROLE_ADMIN');
-        $this->client->loginUser($testUser);
+        return $userRepository->findOneByEmail('user0@gmail.com');
     }
 
     public function testCreateUserWithAdminRole(): void
@@ -44,13 +30,12 @@ class UserControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/users/create');
 
         $this->assertResponseStatusCodeSame(403);
-        $this->assertSelectorTextContains('p', 'Accès refusé.');
+        $this->assertAnySelectorTextSame('p', 'Accès refusé.');
     }
 
     public function testLogIn(): void
     {
-        $userRepository = $this->client->getContainer()->get(UserRepository::class);
-        $testUser = $userRepository->findOneByEmail('user0@gmail.com');
+        $testUser = $this->getUser();
 
         $this->client->loginUser($testUser);
         $crawler = $this->client->request('GET', '/tasks/create');
@@ -59,8 +44,64 @@ class UserControllerTest extends WebTestCase
         $this->assertSelectorTextContains('button', 'Ajouter');
     }
 
-    public function addUser()
-    {
 
+    public function testGetUsersList()
+    {
+        $this->loginAdminUser();
+        $crawler = $this->client->request('GET', '/users');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('h1', 'Liste des utilisateurs');
     }
+    public function testAddUser()
+    {
+        $this->loginAdminUser();
+        $crawler = $this->client->request('GET', '/users/create');
+        $form = $crawler->selectButton('Ajouter')->form([
+            'user[username]' => 'user_test',
+            'user[plain_password][first]' => 'admin123',
+            'user[plain_password][second]' => 'admin123',
+            'user[email]' => 'user_test@gmail.com',
+            'user[roles]' => 'ROLE_USER',
+        ]);
+        $this->client->submit($form);
+        $this->client->followRedirect();
+        $this->assertSelectorTextContains('div.alert.alert-success', 'L\'utilisateur a bien été ajouté.');
+    }
+
+    public function testAddExistingUser()
+    {
+        $this->loginAdminUser();
+        $crawler = $this->client->request('GET', '/users/create');
+        $form = $crawler->selectButton('Ajouter')->form([
+            'user[username]' => 'user0',
+            'user[plain_password][first]' => 'admin123',
+            'user[plain_password][second]' => 'admin123',
+            'user[email]' => 'user_test@gmail.com',
+            'user[roles]' => 'ROLE_USER',
+        ]);
+        $this->client->submit($form);
+        $this->assertSelectorTextContains('div.invalid-feedback', 'Ce nom d\'utilisateur est déjà utilisé.');
+    }
+
+    public function testEditUser()
+    {
+        $this->loginAdminUser();
+        $testUser = $this->getUser();
+        $id = $testUser->getId();
+        $crawler = $this->client->request('GET', "/users/$id/edit");
+
+        $form = $crawler->selectButton('Modifier')->form([
+            'user[username]' => 'user_new',
+            'user[plain_password][first]' => 'admin12',
+            'user[plain_password][second]' => 'admin12',
+            'user[email]' => 'user_new@gmail.com',
+            'user[roles]' => 'ROLE_ADMIN',
+        ]);
+
+        $this->client->submit($form);
+        $this->client->followRedirect();
+        $this->assertAnySelectorTextContains('div.alert.alert-success', 'Superbe ! L\'utilisateur a bien été modifié');
+    }
+
 }
