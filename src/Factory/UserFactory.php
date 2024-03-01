@@ -51,6 +51,8 @@ final class UserFactory extends ModelFactory
             'password' => self::faker()->text(),
             'roles' => [],
             'username' => self::faker()->text(180),
+            'created_at' => self::faker()->dateTime(),
+            'updated_at' => self::faker()->dateTime(),
         ];
     }
 

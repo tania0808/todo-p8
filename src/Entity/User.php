@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -39,11 +40,37 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Task::class, mappedBy: 'author')]
     private Collection $tasks;
 
+    #[ORM\Column(nullable: true)]
+    private ?DateTimeImmutable $created_at;
+
+    public function getCreatedAt(): ?DateTimeImmutable
+    {
+        return $this->created_at;
+    }
+
+    public function setCreatedAt(?DateTimeImmutable $created_at): void
+    {
+        $this->created_at = $created_at;
+    }
+
+    public function getUpdatedAt(): ?DateTimeImmutable
+    {
+        return $this->updated_at;
+    }
+
+    public function setUpdatedAt(?DateTimeImmutable $updated_at): void
+    {
+        $this->updated_at = $updated_at;
+    }
+
+    #[ORM\Column(nullable: true)]
+    private ?DateTimeImmutable $updated_at;
     public function __construct()
     {
         $this->tasks = new ArrayCollection();
+        $this->created_at = new DateTimeImmutable();
+        $this->updated_at = new DateTimeImmutable();
     }
-
 
     public function getId(): ?int
     {
