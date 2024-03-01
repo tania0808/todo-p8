@@ -13,5 +13,6 @@ class HomeControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('h1', 'Bienvenue sur Todo List');
+        $this->assertSelectorTextContains('h4', 'veuillez vous connecter.');
     }
 }

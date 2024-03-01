@@ -20,7 +20,7 @@
                             </svg>
                         {% endif %}
                         <h4 class="m-0 ps-2">
-                            {% if task.author.id is same as(app.user.id) %}
+                            {% if app.user and task.author.id is same as(app.user.id) %}
                                 <a href="{{ path('task_edit', {'id' : task.id }) }}">{{ task.title }}</a>
                             {% else %}
                                 {{ task.title }}
@@ -31,7 +31,7 @@
                     <p class="pt-2">{{ task.content }}</p>
                 </div>
 
-                {% if task.author.id is same as(app.user.id) %}
+                {% if app.user and task.author.id is same as(app.user.id) %}
                 <div>
                     <form action="{{ path('task_toggle', {'id' : task.id }) }}">
                         <button class="btn btn-success btn-sm pull-right">

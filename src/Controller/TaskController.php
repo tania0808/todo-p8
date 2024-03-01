@@ -21,8 +21,12 @@ class TaskController extends AbstractController
     private const TASK_TOGGLE = 'task_toggle';
 
     #[Route('/tasks', name: 'task_list')]
-    public function index(#[MapQueryParameter] bool $isDone, TaskRepository $taskRepository)
+    public function index(#[MapQueryParameter] bool $isDone, TaskRepository $taskRepository): RedirectResponse|Response
     {
+        if(!$this->getUser()) {
+            return $this->redirectToRoute('login');
+        }
+
         return $this->render('task/list.html.twig', ['tasks' => $taskRepository->findByIsDoneField($isDone)]);
     }
 
@@ -54,7 +58,7 @@ class TaskController extends AbstractController
     }
 
     #[Route('/tasks/{id}/edit', name: 'task_edit')]
-    public function edit(Task $task, Request $request, EntityManagerInterface $em)
+    public function edit(Task $task, Request $request, EntityManagerInterface $em): RedirectResponse|Response
     {
         if ($task->getAuthor() !== $this->getUser()) {
             $this->guardAgainstUnauthorizedAccess();
@@ -79,7 +83,7 @@ class TaskController extends AbstractController
     }
 
     #[Route('/tasks/{id}/toggle', name: 'task_toggle')]
-    public function toggleTask(Task $task, EntityManagerInterface $em)
+    public function toggleTask(Task $task, EntityManagerInterface $em): RedirectResponse
     {
         if ($task->getAuthor() !== $this->getUser()) {
             $this->guardAgainstUnauthorizedAccess();
@@ -95,7 +99,7 @@ class TaskController extends AbstractController
     }
 
     #[Route('/tasks/{id}/delete', name: 'task_delete')]
-    public function deleteTask(Task $task, EntityManagerInterface $em)
+    public function deleteTask(Task $task, EntityManagerInterface $em): RedirectResponse
     {
         if ($task->getAuthor() !== $this->getUser()) {
             $this->guardAgainstUnauthorizedAccess();

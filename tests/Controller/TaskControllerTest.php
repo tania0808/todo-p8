@@ -55,7 +55,7 @@ class TaskControllerTest extends DatabaseWebTest
         $task = $this->createTask();
 
         // When
-        $crawler = $this->client->request('GET', '/tasks/' . $task->getId() . '/edit');
+        $this->client->request('GET', '/tasks/' . $task->getId() . '/edit');
         $this->assertResponseIsSuccessful();
         $this->client->submitForm('Modifier', [
             'task[title]' => 'Emails',
@@ -77,10 +77,11 @@ class TaskControllerTest extends DatabaseWebTest
 
         // When
         $this->client->request('GET', '/tasks/' . $task->getId() . '/toggle');
+
+        // Then
         $taskRepository = $this->client->getContainer()->get(TaskRepository::class);
         $toggledTask = $taskRepository->find($task->getId());
 
-        // Then
         $this->assertResponseRedirects('/tasks?isDone=1');
         $this->assertNotNull($toggledTask);
         $this->assertTrue($toggledTask->isDone());
@@ -120,7 +121,7 @@ class TaskControllerTest extends DatabaseWebTest
     {
         // Given
         $task = TaskFactory::new()->createOne();
-        $user = $this->loginUser();
+        $this->loginUser();
 
         // When
         $this->client->request('GET', '/tasks/' . $task->getId() . '/edit');
@@ -134,7 +135,7 @@ class TaskControllerTest extends DatabaseWebTest
     {
         // Given
         $task = TaskFactory::new()->createOne();
-        $user = $this->loginUser();
+        $this->loginUser();
 
         // When
         $this->client->request('GET', '/tasks/' . $task->getId() . '/toggle');
@@ -148,7 +149,7 @@ class TaskControllerTest extends DatabaseWebTest
     {
         // Given
         $task = TaskFactory::new()->createOne();
-        $user = $this->loginUser();
+        $this->loginUser();
 
         // When
         $this->client->request('GET', '/tasks/' . $task->getId() . '/delete');
@@ -160,10 +161,13 @@ class TaskControllerTest extends DatabaseWebTest
 
     public function testAccessNotExistingTask()
     {
+        // Given
         $this->loginUser();
 
+        // When
         $this->client->request('GET', '/tasks/999/edit');
+
+        // Then
         $this->assertResponseStatusCodeSame(404);
     }
-
 }
