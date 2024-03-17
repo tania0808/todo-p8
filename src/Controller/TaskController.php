@@ -16,10 +16,6 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class TaskController extends AbstractController
 {
-    private const TASK_DELETE = 'task_delete';
-    private const TASK_EDIT = 'task_edit';
-    private const TASK_TOGGLE = 'task_toggle';
-
     #[Route('/tasks', name: 'task_list')]
     public function index(#[MapQueryParameter] bool $isDone, TaskRepository $taskRepository): RedirectResponse|Response
     {

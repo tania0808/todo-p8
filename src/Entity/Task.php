@@ -31,6 +31,7 @@ class Task
     private ?DateTimeImmutable $updated_at = null;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'tasks')]
+    #[ORM\JoinColumn(nullable: false)]
     private User $author;
 
     public function __construct()
@@ -86,12 +87,12 @@ class Task
         return $this;
     }
 
-    public function getAuthor(): ?User
+    public function getAuthor(): User
     {
         return $this->author;
     }
 
-    public function setAuthor(?User $author): static
+    public function setAuthor(User $author): static
     {
         $this->author = $author;
 
