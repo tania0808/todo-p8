@@ -17,13 +17,13 @@ use Symfony\Component\Routing\Attribute\Route;
 class TaskController extends AbstractController
 {
     #[Route('/tasks', name: 'task_list')]
-    public function index(#[MapQueryParameter] bool $isDone, TaskRepository $taskRepository): RedirectResponse|Response
+    public function index(TaskRepository $taskRepository, #[MapQueryParameter] bool $isDone = false): RedirectResponse|Response
     {
         if(!$this->getUser()) {
             return $this->redirectToRoute('login');
         }
 
-        return $this->render('task/list.html.twig', ['tasks' => $taskRepository->findByIsDoneField($isDone)]);
+        return $this->render('task/list.html.twig', ['tasks' => $taskRepository->findByAuthorAndIsDoneField($isDone, $this->getUser())]);
     }
 
     #[Route('/tasks/create', name: 'task_create')]

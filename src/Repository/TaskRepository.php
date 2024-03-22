@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Task;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -21,9 +22,21 @@ class TaskRepository extends ServiceEntityRepository
         parent::__construct($registry, Task::class);
     }
 
-    public function findByIsDoneField(bool $isDone): array
+    public function findAllByAuthor(int $authorId): array
     {
         return $this->createQueryBuilder('t')
+            ->andWhere('t.author_id = :authorId')
+            ->setParameter('$authorId', $authorId)
+            ->orderBy('t.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findByAuthorAndIsDoneField(bool $isDone, User $author): array
+    {
+        return $this->createQueryBuilder('t')
+            ->andWhere('t.author = :author')
+            ->setParameter('author', $author)
             ->andWhere('t.isDone = :isDone')
             ->setParameter('isDone', $isDone)
             ->orderBy('t.id', 'DESC')

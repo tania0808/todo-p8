@@ -24,7 +24,6 @@ class DatabaseWebTest extends WebTestCase
         $this->client->disableReboot();
 
         $this->em = $this->client->getContainer()->get('doctrine')->getManager();
-        $this->em->getConnection()->setNestTransactionsWithSavepoints(true);
         $this->em->beginTransaction();
         $this->em->getConnection()->setAutoCommit(false);
     }
