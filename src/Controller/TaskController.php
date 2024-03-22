@@ -13,26 +13,21 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 class TaskController extends AbstractController
 {
     #[Route('/tasks', name: 'task_list')]
+    #[IsGranted('ROLE_USER')]
     public function index(TaskRepository $taskRepository, #[MapQueryParameter] bool $isDone = false): RedirectResponse|Response
     {
-        if(!$this->getUser()) {
-            return $this->redirectToRoute('login');
-        }
-
-        return $this->render('task/list.html.twig', ['tasks' => $taskRepository->findByAuthorAndIsDoneField($isDone, $this->getUser())]);
+        return $this->render('task/list.html.twig', ['tasks' => $taskRepository->findAllByIsDone($isDone)]);
     }
 
     #[Route('/tasks/create', name: 'task_create')]
+    #[IsGranted('ROLE_USER')]
     public function create(Request $request, EntityManagerInterface $em): RedirectResponse|Response
     {
-        if(!$this->getUser()) {
-            return $this->redirectToRoute('login');
-        }
-
         $task = new Task();
         $form = $this->createForm(TaskType::class, $task);
 
@@ -54,12 +49,9 @@ class TaskController extends AbstractController
     }
 
     #[Route('/tasks/{id}/edit', name: 'task_edit')]
+    #[IsGranted('edit', 'task')]
     public function edit(Task $task, Request $request, EntityManagerInterface $em): RedirectResponse|Response
     {
-        if ($task->getAuthor() !== $this->getUser()) {
-            $this->guardAgainstUnauthorizedAccess();
-        }
-
         $form = $this->createForm(TaskType::class, $task);
 
         $form->handleRequest($request);
@@ -79,12 +71,9 @@ class TaskController extends AbstractController
     }
 
     #[Route('/tasks/{id}/toggle', name: 'task_toggle')]
+    #[IsGranted('toggle', 'task')]
     public function toggleTask(Task $task, EntityManagerInterface $em): RedirectResponse
     {
-        if ($task->getAuthor() !== $this->getUser()) {
-            $this->guardAgainstUnauthorizedAccess();
-        }
-
         $task->toggle(!$task->isDone());
         $em->flush();
 
@@ -95,22 +84,14 @@ class TaskController extends AbstractController
     }
 
     #[Route('/tasks/{id}/delete', name: 'task_delete')]
+    #[IsGranted('delete', 'task')]
     public function deleteTask(Task $task, EntityManagerInterface $em): RedirectResponse
     {
-        if ($task->getAuthor() !== $this->getUser()) {
-            $this->guardAgainstUnauthorizedAccess();
-        }
-
         $em->remove($task);
         $em->flush();
 
         $this->addFlash('success', 'La tâche a bien été supprimée.');
 
         return $this->redirectToRoute('task_list', ['isDone' => false]);
-    }
-
-    private function guardAgainstUnauthorizedAccess(): void
-    {
-        throw new AccessDeniedException('',403);
     }
 }

@@ -5,9 +5,9 @@ namespace App\Tests\Controller;
 use App\Entity\Task;
 use App\Factory\TaskFactory;
 use App\Repository\TaskRepository;
+use App\Repository\UserRepository;
 use App\Tests\DatabaseWebTest;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\SecurityBundle\Security;
 
 class TaskControllerTest extends DatabaseWebTest
 {
@@ -131,24 +131,67 @@ class TaskControllerTest extends DatabaseWebTest
         $this->assertAnySelectorTextContains('p', 'Accès refusé.');
     }
 
-    public function testGuardAgainstToggleWithoutPermission()
+    public function testEveryoneCanToggleAnonymousTask()
     {
         // Given
-        $task = TaskFactory::new()->createOne();
+        $userRepository = $this->client->getContainer()->get(UserRepository::class);
+        $anonymousUser = $userRepository->findOneByUserName('anonymous');
+        $task = TaskFactory::new()->createOne(['author' => $anonymousUser ]);
         $this->loginUser();
 
         // When
         $this->client->request('GET', '/tasks/' . $task->getId() . '/toggle');
 
         // Then
-        $this->assertResponseStatusCodeSame(403);
-        $this->assertAnySelectorTextContains('p', 'Accès refusé.');
+        $this->assertResponseRedirects('/tasks?isDone=' . ($task->isDone() ? '0' : '1'));
     }
 
     public function testGuardAgainstDeleteWithoutPermission()
     {
         // Given
         $task = TaskFactory::new()->createOne();
+        $this->loginUser();
+
+        // When
+        $this->client->request('GET', '/tasks/' . $task->getId() . '/delete');
+
+        // Then
+        $this->assertResponseStatusCodeSame(403);
+        $this->assertAnySelectorTextContains('p', 'Accès refusé.');
+    }
+
+    public function testAdminCanDeleteAnonymousTask()
+    {
+        // Given
+        $userRepository = $this->client->getContainer()->get(UserRepository::class);
+        $anonymousUser = $userRepository->findOneByUserName('anonymous');
+        $task = new Task();
+        $task->setTitle('Phone');
+        $task->setContent('Appeler le client');
+        $task->setAuthor($anonymousUser);
+        $this->entityManager->persist($task);
+        $this->entityManager->flush();
+
+        $this->loginAdminUser();
+
+        // When
+        $this->client->request('GET', '/tasks/' . $task->getId() . '/delete');
+
+        // Then
+        $this->assertResponseRedirects('/tasks?isDone=0');
+    }
+
+    public function testUserCanNotDeleteAnonymousTask()
+    {
+        // Given
+        $userRepository = $this->client->getContainer()->get(UserRepository::class);
+        $anonymousUser = $userRepository->findOneByUserName('anonymous');
+        $task = new Task();
+        $task->setTitle('Phone');
+        $task->setContent('Appeler le client');
+        $task->setAuthor($anonymousUser);
+        $this->entityManager->persist($task);
+        $this->entityManager->flush();
         $this->loginUser();
 
         // When

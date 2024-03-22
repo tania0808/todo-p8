@@ -22,21 +22,9 @@ class TaskRepository extends ServiceEntityRepository
         parent::__construct($registry, Task::class);
     }
 
-    public function findAllByAuthor(int $authorId): array
+    public function findAllByIsDone(bool $isDone): array
     {
         return $this->createQueryBuilder('t')
-            ->andWhere('t.author_id = :authorId')
-            ->setParameter('$authorId', $authorId)
-            ->orderBy('t.id', 'DESC')
-            ->getQuery()
-            ->getResult();
-    }
-
-    public function findByAuthorAndIsDoneField(bool $isDone, User $author): array
-    {
-        return $this->createQueryBuilder('t')
-            ->andWhere('t.author = :author')
-            ->setParameter('author', $author)
             ->andWhere('t.isDone = :isDone')
             ->setParameter('isDone', $isDone)
             ->orderBy('t.id', 'DESC')

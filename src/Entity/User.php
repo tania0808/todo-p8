@@ -16,6 +16,7 @@ use Symfony\Component\Validator\Constraints\Unique;
 #[ORM\Table(name: '`user`')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
+    const ANONYMOUS_USER_EMAIL = 'anonymous@gmail.com';
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'SEQUENCE')]
     #[ORM\Column]
@@ -162,5 +163,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->email = $email;
 
         return $this;
+    }
+
+    public function hasRole(string $role): bool
+    {
+        return in_array($role, $this->roles);
+    }
+
+    public function isAnonymous(): bool
+    {
+        return self::ANONYMOUS_USER_EMAIL === $this->email;
     }
 }
